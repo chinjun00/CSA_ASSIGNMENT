@@ -39,7 +39,12 @@ Login:
     ;User Input Name
     mov ah,01h
     int 21h
-    mov bh,ah ; << need store user login
+
+    ;Im stressed
+    lea [si],UserInput
+    mov [si],ah ; << need store user name in array
+    inc [si]
+
 
     ;Prompt User Password
     mov ah,9h
@@ -49,6 +54,7 @@ Login:
     mov ah,01h 
     int 21h
     mov bh,ah ; << need store user password
+    mov [si],bh ; store user pass in array
 
     cmp dh,bh ; compare username in database
 
