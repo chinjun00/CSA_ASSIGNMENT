@@ -1,23 +1,76 @@
-.model small    
+.model large   
 .stack 100
 .data
-    strMenu     msg1 db "Please Login your username and Password." ,'$'
-               
-                db 13, 10, "5. Exit Program",'$'
-    strX    db 13,10,"x: (0-9 only)",'$'
-    stry    db 13,10,"y: (0-9 only)",'$'
-    x db 0
-    y db 0
+    welcMsg db "Welcome to Defintely-Not Public Bank !" ,'$'
+    msgLog db "Login your ID" ,'$'
+    msgPass db "Input your password", '$'
+
+    UserInput db 100 dup(0), '$'
+ 
+ 
+ 
+ 
+    msgEnd db 13, 10, "5. Exit Program",'$'
+
+ 
     output db 8 dup(0), '$'
     strOutput   db 13,10,"output: "
- 
     newline db 13, 10, '$'
 
 .code
-ORG 0h
 main proc
     mov ax,@data
     mov ds,ax
 
+
+    ; Print output
+    mov ah,9h
+    lea dx,welcMsg
+    int 21h
+
+Login:
+
+    ;Prompt Username Login
+    mov ah,9h
+    lea dx,msgLog
+    int 21h
+
+    ;User Input Name
+    mov ah,01h
+    int 21h
+    mov [arrayName],UserInput ; << need store user name in array
+
+    ; Jump to relogin if not the same input
+    cmp [arrayName],[arrayRegisteredName]
+    jne Relogin
+    ; 
+
+
+
+    ;Prompt User Password
+    mov ah,9h
+    lea dx,msgPass
+
+    ;User Input Password
+    mov ah,01h 
+    int 21h
+    mov bh,ah ; << need store user password
+    mov [si],bh ; store user pass in array
+
+    cmp dh,bh ; compare username in database
+
+
+    
+    mov ah,01h 
+    int 21h
+    mov bh,ah
+
+Relogin:
+
+
+
+;Store username
+StoreName:
+    
 main     endp
 end     main
