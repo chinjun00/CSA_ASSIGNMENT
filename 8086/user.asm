@@ -8,7 +8,7 @@
     UserInput db 100 dup(0), '$'
 
 .code
-ORG 01h
+
 main proc
     mov ax,@data
     mov ds,ax

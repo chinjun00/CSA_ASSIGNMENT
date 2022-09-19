@@ -1,21 +1,28 @@
 .model large   
-.stack 100
+.stack 1000
 .data
     welcMsg db "Welcome to Defintely-Not Public Bank !" ,'$'
-    msgLog db "Login your ID" ,'$'
-    msgPass db "Input your password", '$'
+    
+    
+    msgLog db 13,10,  "Login your ID" ,'$'
+    msgPass db 13,10, "Input your password", '$'
 
-    UserInput db 100 dup(0), '$'
- 
- 
- 
- 
-    msgEnd db 13, 10, "5. Exit Program",'$'
+    reloginMsg1 db 13,10, "Wrong Input Of Username or Password!" ,'$'
+    reloginMsg2 db 13,10, "Plesae sign in your user ID Correctly" ,'$'
 
+    arrayID db 50 dup(0),'$';Store Username
+    arrayPass db 50  dup(0);Store Password
+
+    arrayRegisteredId db "50 dup(0) ,'$'" 
+    arrayRegisteredPass db 50 dup(0) 
+
+    UserInput db 100 dup(0), '$' 
  
-    output db 8 dup(0), '$'
-    strOutput   db 13,10,"output: "
+
     newline db 13, 10, '$'
+
+    msgEnd db 13, 10, "Exit Program",'$'
+
 
 .code
 main proc
@@ -25,26 +32,45 @@ main proc
 
     ; Print output
     mov ah,9h
-    lea dx,welcMsg
+    lea dx,welcMsg ;"Welcome to Defintely-Not Public Bank !"
     int 21h
+    jmp Login
+    
 
 Login:
 
     ;Prompt Username Login
     mov ah,9h
-    lea dx,msgLog
+    lea dx,msgLog ;"Login your ID"
     int 21h
 
     ;User Input Name
     mov ah,01h
     int 21h
-    mov [arrayName],UserInput ; << need store user name in array
+    mov si,0
+    mov arrayID[si],al ; << Stored user input ID in array
 
     ; Jump to relogin if not the same input
-    cmp [arrayName],[arrayRegisteredName]
-    jne Relogin
-    ; 
+    mov ax,arrayID[si]
+    
 
+    cmp arrayID[si],al           ; memory cannot cmp with memory
+    inc si
+
+    jne Relogin
+    je MainMenu
+
+
+
+Relogin:
+    mov ah,9h
+    lea dx,reloginMsg1
+    int 21h
+    lea dx,reloginMsg2
+    int 21h
+    jmp Login
+
+    jmp MainMenu
 
 
     ;Prompt User Password
@@ -65,11 +91,17 @@ Login:
     int 21h
     mov bh,ah
 
-Relogin:
+
 
 
 
 ;Store username
+
+
+MainMenu:
+
+
+
 StoreName:
     
 main     endp
