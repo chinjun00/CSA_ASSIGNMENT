@@ -29,10 +29,16 @@
 
 ;balance
     balance DW 2000
-    balanceMenu1        DB 10,13,9,"Balance :",'$'      
+    balanceMenu1        DB 10,13,9,"Balance :",'$'     
+
 ;deposit
-    depositMenu1    DB 10,13,9,"Please enter the Deposit Account Number:",'$'       
-    depositMenu2    DB 10,13,9,"Enter the amount of cash to deposit:",'$'       
+    depositMenu1    DB 10,13,9,"Please enter the Deposit Account Number:",'$'
+    accountNumber   DB 15 DUP(?)       
+    depositMenu2    DB 10,13,9,"Enter the amount of cash to deposit:",'$'
+    depositAmount   DB 15 DUP(?)
+    nextLine        DB 10,13,'$'
+    confirmMsg      DB 10,13,9,"Amount confirmed?(Y/N)",'$'
+    amountConfirm   DB 10 DUP(?)
 
 ;withdraw
     withdrawMenu1           DB 10,13,9,"How much cash do you want to withdraw?       ",'$'
@@ -340,14 +346,42 @@ calculateCash endp
 
 deposit proc
     call cls
-    mov ah,9h
+;prompt message for Deposit Account Number
     lea dx,depositMenu1
+    mov ah,09h
     int 21h
-    lea dx,nextLine
+
+;input Account Number
+    lea si, accountNumber
+    mov ah, 1h
+    mov accountNumber[si], al
     int 21h
-    lea dx,depositMenu2
+    lea dx, nextLine
     int 21h
-    ret
+
+;prompt message for amount input
+    lea dx, depositMenu2
+    mov ah, 9h
+    int 21h
+
+;input Amount of Cash for Deposit
+    lea di, depositAmount
+    mov ah, 1h
+    mov 
+    int 21h
+
+;confirm message
+    lea dx, confirmMsg
+    mov ah, 9h
+    int 21h
+    mov al, 1h
+    mov al, 2h
+    mov cl, al
+    cmp ah, 4Eh
+    je error
+    cmp ah, 59h
+    RET
+
 
     ; User input amount to deposit
     ; Update to account balance 
