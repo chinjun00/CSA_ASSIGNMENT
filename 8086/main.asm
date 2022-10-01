@@ -25,7 +25,6 @@
     mmselect            DB 10,13," Enter your choice (0 to exit)     : $"
 
     mmreturn            DB 10,13," Enter 0 to return to Main Menu    : $" 
-    nextLine DB 10,13,'$'
 
 ;balance
     balance DW 2000
@@ -367,7 +366,6 @@ deposit proc
 ;input Amount of Cash for Deposit
     lea di, depositAmount
     mov ah, 1h
-    mov 
     int 21h
 
 ;confirm message
@@ -378,9 +376,18 @@ deposit proc
     mov al, 2h
     mov cl, al
     cmp ah, 4Eh
-    je error
+    je depositError
     cmp ah, 59h
-    RET
+    ret
+
+    depositError :
+        call cls
+		call displaylogo 			
+        lea dx, invalidMsg
+    	mov ah, 9h
+    	int 21h
+        call systemPause
+    	jmp begin  
 
 
     ; User input amount to deposit
