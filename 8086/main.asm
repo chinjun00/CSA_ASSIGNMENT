@@ -276,28 +276,198 @@ displayAccount endp
 withdraw proc ;getCash proc
 
 
-    withdrawMenuDisplay:
-        call displayAccount
-
-        mov ah,9h
-        lea dx,nextline
-        int 21h
-        lea dx,withdrawMenu1   ;  How much cash do you want to withdraw?
-        int 21h
-
-
-    
     reEnter:
+        call displayAccount
         mov ah,09h
-        lea dx,withdrawMenu2  ; Enter your amount: 
+        lea dx,withdrawMenu1  ; How much cash do you want to withdraw? 
         int 21h
-        
-        
+        mov si,0
+           
     
 
     ; user input amount of cash to take out
     ; confirmation check
     ; return to main menu
+
+
+    withdrawMenuDisplay:
+        mov ah,9h
+        lea dx,nextline
+        int 21h
+        lea dx,withdrawMenu2   ;  Enter your amount:
+        int 21h
+        
+        mov ah,01h
+        int 21h
+        
+        cmp al,'.'
+        je enterCashDecimal ;check for decimal
+		
+		cmp al,8
+		je backSpace
+        
+        cmp al,13   ;stop if input <enter>
+        je checkIsNull
+        
+        sub al,30h  ;change to int
+        
+        cmp al,0    ;check input is 0 to 9
+        jl invalidCash
+        cmp al,9
+        jg invalidCash
+        
+        mov input[si],al
+		cmp si,3 ;if 4 digit (maximum) jmp out
+		je nextCash
+        
+        inc si
+    jmp withdrawMenuDisplay 
+
+    checkIsNull:
+	cmp si,0
+	je withdrawMenuDisplay	;check is input empty or not
+	jmp nextCash
+
+	
+	backSpace:
+	cmp si,0 ;if index is 0, block for backspace
+	jne	deleteNum
+
+	mov ah,02h
+	mov dl,32
+	int 21h
+	jmp withdrawMenuDisplay
+	
+	deleteNum:
+	mov ah,02h
+	mov dl,0
+	int 21h
+	mov dl,8
+	int 21h
+	mov input[si],'*'	;set back to empty
+	dec si
+	jmp withdrawMenuDisplay
+
+    invalidCash:
+    mov ah,02h
+    mov dl,8
+    int 21h
+    mov dl,0
+    int 21h 
+    mov dl,8
+    int 21h
+    jmp withdrawMenuDisplay 
+    
+    invalidCashDecimal:
+    mov ah,02h
+    mov dl,8
+    int 21h
+    mov dl,0
+    int 21h 
+    mov dl,8
+    int 21h
+    jmp contEnterCashDecimal 
+    
+    enterCashDecimal:
+    mov cx,2
+    mov bx,10   
+    mov si,0
+    
+    contEnterCashDecimal:
+        mov ah,01h
+        int 21h 
+        
+        sub al,30h  ;change to int   
+        cmp al,0    ;check input is 0 to 9
+        jl invalidCashDecimal
+        cmp al,9
+        jg invalidCashDecimal 
+        
+        mov cashDecimal[si],al 
+        inc si
+    loop contEnterCashDecimal
+    
+    nextCash:
+    mov cx,4
+    mov si,3
+    mov di,3
+    check:
+        cmp input[si],'*' ;400*
+        jne exchange
+        
+        dec si
+    loop check    
+    
+    mov si,3               ;if 4 digits, copy array  
+    
+    exchange: 
+        mov al,input[si]
+        mov amount[di],al
+        
+        cmp si,0
+        je done
+        
+        dec di
+        dec si
+    jmp exchange
+    
+    
+    done:
+    mov bx,1000
+    mov ax,0    
+    mov cx,4
+    mov si,0
+        convertToInt:     ;store cash
+            mov ax,0
+            mov al,amount[si]
+            mul bx
+            add cashIn,ax
+            
+            mov ax,bx 
+            mov bx,10
+            div bx
+            mov bx,ax
+            
+            inc si
+        loop convertToInt   
+    
+    mov ax,0   ;clear ax    
+    mov bx,10  ;store cash decimal         
+    mov al,cashDecimal[0]
+    mul bx
+    mov cashIn[2],ax
+    
+    mov al,cashDecimal[1]
+    add cashIn[2],ax 
+    
+    mov ax,cashIn[0]    ;check cash is greater than grand total
+    mov bx,grandTotal[0]
+    cmp ax,bx
+    jl notEnough
+    cmp ax,bx           ;if equal,compare decimal
+    je checkCashDecimal
+    ret
+    
+    checkCashDecimal:
+    mov ax,cashIn[2]    ;multiply 100 to compare since grandtotal is 4 decimal
+    mov bx,100
+    mul bx    
+    mov bx,grandTotal[2]
+    cmp ax,bx
+    jl notEnough  
+    ret
+    
+    
+    notEnough:  
+    mov ah,09h
+    lea dx,paymentError
+    int 21h
+    jmp reEnter
+    
+
+
+
+    
 
 withdraw endp
 
@@ -343,58 +513,53 @@ calculateCash proc
 calculateCash endp
 
 
-deposit proc
-    call cls
-;prompt message for Deposit Account Number
-    lea dx,depositMenu1
-    mov ah,09h
-    int 21h
+ deposit proc
+;     call cls
+; ;prompt message for Deposit Account Number
+;     lea dx,depositMenu1
+;     mov ah,09h
+;     int 21h
 
-;input Account Number
-    lea si, accountNumber
-    mov ah, 1h
-    mov accountNumber[si], al
-    int 21h
-    lea dx, nextLine
-    int 21h
+; ;input Account Number
+;     lea si, accountNumber
+;     mov ah, 1h
+;     mov accountNumber[si], al
+;     int 21h
+;     lea dx, nextLine
+;     int 21h
 
-;prompt message for amount input
-    lea dx, depositMenu2
-    mov ah, 9h
-    int 21h
+; ;prompt message for amount input
+;     lea dx, depositMenu2
+;     mov ah, 9h
+;     int 21h
 
-;input Amount of Cash for Deposit
-    lea di, depositAmount
-    mov ah, 1h
-    int 21h
+; ;input Amount of Cash for Deposit
+;     lea di, depositAmount
+;     mov ah, 1h
+;     int 21h
 
-;confirm message
-    lea dx, confirmMsg
-    mov ah, 9h
-    int 21h
-    mov al, 1h
-    mov al, 2h
-    mov cl, al
-    cmp ah, 4Eh
-    je depositError
-    cmp ah, 59h
-    ret
+; ;confirm message
+;     lea dx, confirmMsg
+;     mov ah, 9h
+;     int 21h
+    
+;     ret
 
-    depositError :
-        call cls
-		call displaylogo 			
-        lea dx, invalidMsg
-    	mov ah, 9h
-    	int 21h
-        call systemPause
-    	jmp begin  
+;     depositError :
+;         call cls
+; 		call displaylogo 			
+;         lea dx, invalidMsg
+;     	mov ah, 9h
+;     	int 21h
+;         call systemPause
+;     	jmp begin  
 
 
-    ; User input amount to deposit
-    ; Update to account balance 
-    ; return to main menu
+;     ; User input amount to deposit
+;     ; Update to account balance 
+;     ; return to main menu
 
-deposit endp
+ deposit endp
 
 investCompany proc
     call cls
