@@ -32,8 +32,9 @@
     mmtitle             DB 10,13,9,9,186,"               Main Menu                ",186,'$'
     mainmenu1           DB 10,13,9,9,186," 1    ",186," Check User Account Balance (!)  ",186,'$'
     mainmenu2           DB 10,13,9,9,186," 2    ",186," Withdraw Cash              (!)  ",186,'$'
-    mainmenu3           DB 10,13,9,9,186," 3    ",186," Stock Order Report              ",186,'$'
-    mainmenu4           DB 10,13,9,9,186," 4    ",186," Company Investment              ",186,'$'
+    mainmenu3           DB 10,13,9,9,186," 3    ",186," Deposit Cash               (!)  ",186,'$'
+    mainmenu4           DB 10,13,9,9,186," 4    ",186," Stock Order Report              ",186,'$'
+    mainmenu5           DB 10,13,9,9,186," 5    ",186," Company Investment              ",186,'$'
 
     mmselect            DB 10,13," Enter your choice (0 to exit)     : $"
     mmreturn            DB 10,13," Enter 0 to return to Main Menu    : $" 
@@ -55,7 +56,7 @@
 
 ;user balance
     menuBoxTop1    DB 10,10,13,9,9,201,16 DUP(205),203,24 DUP(205),187,'$'
-    balanceMsg      DB 10,13,9,9,204," User ID : U001 ",186," Balance Total:   ",'$'
+    balanceMsg      DB 10,13,9,9,204," User ID : U001 ",186," Balance Total:     ",'$'
     closeMsg        DB 186,'$'
     menuBoxBottom1   DB 10,13,9,9,200,16 DUP(205),200,24 DUP(205),188,'$'       
 
@@ -417,6 +418,8 @@ dispMainMenu proc
         int 21h  
         lea dx,mainmenu4
         int 21h  
+        lea dx,mainmenu5
+        int 21h  
         lea dx,mmBoxBottom
         int 21h 
         ret
@@ -442,17 +445,20 @@ mainMenu proc
         cmp bl, '0'                 ;input:0 - quitmm
         je quitmm                                  
         
-        cmp bl, '1'                 ;input:1 - display menu
+        cmp bl, '1'                 ;input:1 - check user balance
         je select1                                      
         
-        cmp bl, '2'                 ;input:2 - proceed order
+        cmp bl, '2'                 ;input:2 - withdraw cash
         je select2                                            
         
-        cmp bl, '3'                 ;input:3 - order summary
+        cmp bl, '3'                 ;input:3 - Deposit Cash
         je select3
 
-        cmp bl, '4'
-        je select4
+        cmp bl, '4'                 ;input4  - Stock Order Report
+        je select4                  
+
+        cmp bl, '5'                 ;input   - Stock Investment
+        je select5
 	jne redo
         
     select1:        
@@ -463,16 +469,23 @@ mainMenu proc
     select2:  
         call withdraw
         call systemPause      
-        jmp redo ;Withdraw Cash
+        jmp redo
 
-    select3: 
+    select3:
+        call deposit
+        call systemPause
+        jmp redo
+
+    select4: 
         call orderSummary  
         call systemPause
         jmp redo
 
-    select4:
+    select5:
         call order
         jmp redo
+
+    
 
     quitmm:
         mov ah,9h
@@ -856,8 +869,6 @@ order endp
 
 
 withdraw proc ;getCash proc
-
-
     reEnter1:
         call displayAccount
         mov ah,09h
@@ -866,18 +877,20 @@ withdraw proc ;getCash proc
         lea dx,nextline
         int 21h
         mov si,0
-
-
-
         ret
-           
-    
-
     ; user input amount of cash to take out
     ; confirmation check
     ; return to main menu    
 
 withdraw endp
+
+deposit proc
+
+call displayAccount
+mov ah,9h
+
+ret
+deposit endp
 
 
 
@@ -890,31 +903,17 @@ displayAccount proc
     lea dx,balanceMsg  ;orderStr10
     int 21h
 
-
-    
-
-    mov ax,taxAmount[2]
-    mov bx,100
-    mul bx
-    mov bx,ax
-    add bx,taxAmount[4]      ;pass combined float numbers of tax
-    mov ax,taxAmount[0]      ;pass number amount of tax  
-    
-    mov cx,totalAfterDiscount[0] ;pass total after discount
-    mov dx,totalAfterDiscount[2]
-    call sumTotal   
-    
-    mov ax,number           ;calculated total(before decimal point)
-    mov grandTotal[0],ax
+    mov ax,cashIn[0]
     call displayEachDigit
-
     mov ah,02h              ;print dot
     mov dl,'.'
     int 21h  
 
-        mov ax,decimal_1        ;calculated total decimal(2 digit of decimal)     
-    mov grandTotal[2],ax
-    call display4Digit 
+    mov ax,cashIn[2]
+    call display2Digit    
+    
+
+    
 
 
     mov ah,9h
